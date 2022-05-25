@@ -1,0 +1,59 @@
+program: main.py
+method: random
+parameters:
+  num-steps:
+    min: 1_000
+    max: 10_000
+    distribution: int_uniform
+  lr:
+    min: -12.71 # 3e-6
+    max: -3.5 # 3e-2
+    distribution: log_uniform
+  entropy-coef:
+    min: -9.21 # 0.0001
+    max: 0 # 1.0
+    distribution: log_uniform
+  value-loss-coef:
+    min: -3.00 # 0.05
+    max: 1.61 # 5.0
+    distribution: log_uniform
+  max-grad-norm:
+    min: -3.00 # 0.05
+    max: 1.61 # 5.0
+    distribution: log_uniform
+  ppo-epoch:
+    min: 5
+    max: 100
+    distribution: int_uniform
+  num-mini-batch:
+    min: 1
+    max: 64
+    distribution: int_uniform
+  seed:
+    min: 1
+    max: 100
+    distribution: int_uniform
+  use-linear-lr-decay:
+    values: [True, False]
+  
+
+  num-processes:
+    value: 1
+  env-name:
+    value: "gym_aliengo:aliengo-v0"
+  algo:
+    value: ppo
+  log-interval:
+    value: 1
+  gamma:
+    value: 0.99
+  gae-lambda: 
+    value: 0.95
+  num-env-steps:
+    value: 1_000_000
+  clip-param:
+    value: 0.2
+
+
+  
+  

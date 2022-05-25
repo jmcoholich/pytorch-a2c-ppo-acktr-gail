@@ -1,0 +1,46 @@
+program: main.py
+project: Experiment4
+method: random
+parameters:
+  num-steps:
+    values: [300, 500, 700]
+  lr:
+    values: [5e-5, 1e-5, 7e-5, 3e-5]
+  max-grad-norm:
+    value: 0.5
+  ppo-epoch:
+    values: [60, 80]
+  num-mini-batch:
+    values: [8, 16, 32]
+  seed:
+    min: 1
+    max: 1000000
+    distribution: int_uniform
+  use-linear-lr-decay:
+    value: False
+  
+
+  value-loss-coef:
+    value: 0.5
+  num-processes:
+    value: 10
+  env-name:
+    value: "gym_aliengo:aliengo-v0"
+  algo:
+    value: ppo
+  log-interval:
+    value: 1
+  gamma:
+    value: 0.99
+  gae-lambda: 
+    value: 0.95
+  num-env-steps:
+    value: 100_000_000
+  clip-param:
+    value: 0.2
+  entropy-coef:
+    values: [0, 0.001, 0.01, 0.0033, 1e-10]
+
+
+  
+  

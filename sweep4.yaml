@@ -1,0 +1,52 @@
+program: main.py
+project: Experiment1_more_logging
+method: random
+parameters:
+  num-steps:
+    min: 50
+    max: 150
+    distribution: int_uniform
+  lr:
+    min: -10.41 # 3e-5
+    max: -5.81 #3e-3
+    distribution: log_uniform
+  max-grad-norm:
+    value: 0.5
+  ppo-epoch:
+    min: 10
+    max: 100
+    distribution: int_uniform
+  num-mini-batch:
+    min: 1
+    max: 32
+    distribution: int_uniform
+  seed:
+    value: 100
+  use-linear-lr-decay:
+    value: False
+  
+
+  value-loss-coef:
+    value: 0.5
+  num-processes:
+    value: 10
+  env-name:
+    value: "gym_aliengo:aliengo-v0"
+  algo:
+    value: ppo
+  log-interval:
+    value: 1
+  gamma:
+    value: 0.99
+  gae-lambda: 
+    value: 0.95
+  num-env-steps:
+    value: 1_000_000
+  clip-param:
+    value: 0.2
+  entropy-coef:
+    value: 0
+
+
+  
+  

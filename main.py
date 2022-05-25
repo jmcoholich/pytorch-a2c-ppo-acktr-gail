@@ -19,9 +19,20 @@ from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from evaluation import evaluate
 
+import wandb
+import warnings
+
+'''
+python main.py --env-name "gym_aliengo:aliengo-v0" --algo ppo --use-gae --log-interval 1 --num-steps 1000 --num-processes 10 --lr 3e-4 --entropy-coef 0 --value-loss-coef 0.5 --ppo-epoch 20 --num-mini-batch 6 --gamma 0.99 --gae-lambda 0.95 --num-env-steps 10_000_000 --use-linear-lr-decay=True --use-proper-time-limits --wandb-project "termination_penalty" --seed 2
+'''
 
 def main():
+    total_env_steps = 0
     args = get_args()
+    if not args.wandb_project:
+        warnings.warn('No wandb project specified')
+    wandb.init(project=args.wandb_project, config=args)
+    args.save_dir = './trained_models/' + str(args.wandb_project) + str(args.seed)
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -37,6 +48,10 @@ def main():
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
+    device = torch.device('cpu')
+
+    if args.hierarchical_policy and not(args.env_name == 'gym_aliengo:aliengo-v0' or args.env_name == 'MinitaurBulletEnv-v0'):
+        raise ValueError('Currently, this implementation only supports the use of a hierarchical policy for the aliengo or minitaur quadrupeds.')
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False)
@@ -44,9 +59,13 @@ def main():
     actor_critic = Policy(
         envs.observation_space.shape,
         envs.action_space,
-        base_kwargs={'recurrent': args.recurrent_policy})
+        base_kwargs={'recurrent': args.recurrent_policy,
+        'hierarchical': args.hierarchical_policy})
     actor_critic.to(device)
-
+    # wandb.watch(actor_critic.base.actor, log='all')
+    # wandb.watch(actor_critic.base.critic, log='all')
+    # wandb.watch(actor_critic.base.critic_linear, log='all')
+    # wandb.watch(actor_critic.dist, log='all')
     if args.algo == 'a2c':
         agent = algo.A2C_ACKTR(
             actor_critic,
@@ -93,6 +112,8 @@ def main():
                               envs.observation_space.shape, envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
 
+    entropies = torch.Tensor([])
+
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
@@ -113,16 +134,32 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states, dist_entropy = actor_critic.act(
                     rollouts.obs[step], rollouts.recurrent_hidden_states[step],
                     rollouts.masks[step])
-
+            
+            entropies = torch.cat((entropies, torch.Tensor([dist_entropy.item()])))
+            
+        
             # Obser reward and next obs
+            action = np.clip(action, envs.action_space.low, envs.action_space.high) # added to stop getting errors from environments
             obs, reward, done, infos = envs.step(action)
 
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
+                    # added code for wandb, convert wall time to hours and also log total number of samples
+                    wandb_info = {}
+                    total_env_steps += info['episode']['l'] 
+                    wandb_info['hours_wall_time'] = info['episode']['t']/3600.
+                    wandb_info['num_env_samples'] = total_env_steps
+                    wandb_info['episode_length']  = info['episode']['l'] 
+                    wandb_info['episode_reward']  = info['episode']['r']
+                    wandb_info['average_entropy']  = entropies.mean()
+                    if 'avg_trot_loss' in info:
+                        wandb_info['avg_trot_loss'] = info['avg_trot_loss']
+                    entropies = torch.Tensor([])
+                    wandb.log(wandb_info)
 
             # If done then clean the history of observations.
             masks = torch.FloatTensor(
@@ -132,6 +169,7 @@ def main():
                  for info in infos])
             rollouts.insert(obs, recurrent_hidden_states, action,
                             action_log_prob, value, reward, masks, bad_masks)
+            
 
         with torch.no_grad():
             next_value = actor_critic.get_value(
@@ -169,17 +207,19 @@ def main():
                 os.makedirs(save_path)
             except OSError:
                 pass
-
             torch.save([
                 actor_critic,
-                getattr(utils.get_vec_normalize(envs), 'obs_rms', None)
+                getattr(utils.get_vec_normalize(envs), 'ob_rms', None)
             ], os.path.join(save_path, args.env_name + ".pt"))
+
+
+
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
             end = time.time()
-            print(
-                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n"
+            print("Updates {}, num timesteps {}, FPS {} \n Last {} training episodes:\
+                     mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n"
                 .format(j, total_num_steps,
                         int(total_num_steps / (end - start)),
                         len(episode_rewards), np.mean(episode_rewards),
@@ -189,8 +229,8 @@ def main():
 
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
-            obs_rms = utils.get_vec_normalize(envs).obs_rms
-            evaluate(actor_critic, obs_rms, args.env_name, args.seed,
+            ob_rms = utils.get_vec_normalize(envs).ob_rms
+            evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
 
 

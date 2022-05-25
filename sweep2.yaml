@@ -1,0 +1,56 @@
+program: main.py
+project: aliengo_sweep_2
+method: random
+parameters:
+  num-steps:
+    min: 5_000
+    max: 10_000
+    distribution: int_uniform
+  lr:
+    value: 3e-4
+  entropy-coef:
+    min: -9.21 # 0.0001
+    max: -4 # 0.018
+    distribution: log_uniform
+  value-loss-coef:
+    value: 0.5
+  max-grad-norm:
+    min: -0.7 # 0.5
+    max: 2.32 # 10.0
+    distribution: log_uniform
+  ppo-epoch:
+    min: 70
+    max: 100
+    distribution: int_uniform
+  num-mini-batch:
+    min: 1
+    max: 10
+    distribution: int_uniform
+  seed:
+    min: 1
+    max: 100
+    distribution: int_uniform
+  use-linear-lr-decay:
+    value: False
+  
+
+  num-processes:
+    value: 1
+  env-name:
+    value: "gym_aliengo:aliengo-v0"
+  algo:
+    value: ppo
+  log-interval:
+    value: 1
+  gamma:
+    value: 0.99
+  gae-lambda: 
+    value: 0.95
+  num-env-steps:
+    value: 10_000_000
+  clip-param:
+    value: 0.2
+
+
+  
+  

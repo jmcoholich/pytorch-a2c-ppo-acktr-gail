@@ -9,6 +9,8 @@ import torch
 from a2c_ppo_acktr.envs import VecPyTorch, make_vec_envs
 from a2c_ppo_acktr.utils import get_render_func, get_vec_normalize
 
+import time
+
 sys.path.append('a2c_ppo_acktr')
 
 parser = argparse.ArgumentParser(description='RL')
@@ -43,20 +45,21 @@ env = make_vec_envs(
     None,
     None,
     device='cpu',
-    allow_early_resets=False)
+    allow_early_resets=False,
+    render=True)
+
 
 # Get a render function
 render_func = get_render_func(env)
 
 # We need to use the same statistics for normalization as used in training
-actor_critic, obs_rms = \
-            torch.load(os.path.join(args.load_dir, args.env_name + ".pt"),
-                        map_location='cpu')
+actor_critic, ob_rms = \
+            torch.load(os.path.join(args.load_dir, args.env_name + ".pt"))
 
 vec_norm = get_vec_normalize(env)
 if vec_norm is not None:
     vec_norm.eval()
-    vec_norm.obs_rms = obs_rms
+    vec_norm.ob_rms = ob_rms
 
 recurrent_hidden_states = torch.zeros(1,
                                       actor_critic.recurrent_hidden_state_size)
@@ -81,6 +84,7 @@ while True:
             obs, recurrent_hidden_states, masks, deterministic=args.det)
 
     # Obser reward and next obs
+    action = np.clip(action, env.action_space.low, env.action_space.high)
     obs, reward, done, _ = env.step(action)
 
     masks.fill_(0.0 if done else 1.0)
@@ -94,3 +98,6 @@ while True:
 
     if render_func is not None:
         render_func('human')
+
+
+    time.sleep(1./240)

@@ -1,0 +1,45 @@
+import cv2
+    env = gym.make('gym_aliengo:aliengo-v0')
+    env.reset()
+    img = env.render('rgb_array')
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img_list = [img]
+    counter = 0
+
+    # for i in range(200):
+    #     p.stepSimulation()
+    #     img = env.render('rgb_array')
+    #     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    #     img_list.append(img)
+
+    # with open('mocap.txt','r') as f:
+    #     env.step([float(x) for x in f.readline().split(',')[2:]])
+    # img = env.render('rgb_array')
+    # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    # img_list.append(img)
+    # for i in range(200):
+    #     p.stepSimulation()
+    #     img = env.render('rgb_array')
+    #     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    #     img_list.append(img)
+        
+    with open('mocap.txt','r') as f:
+        for line in f:
+            positions = [float(x) for x in line.split(',')[2:]]
+            env.step(positions)
+            if counter%4 ==0: # sim runs 240 Hz, want 60 Hz vid   
+                img = env.render('rgb_array')
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                img_list.append(img)
+            counter +=1
+            # if counter ==100:
+            #     break
+
+    height, width, layers = img.shape
+    size = (width, height)
+    out = cv2.VideoWriter('test_vid.avi', cv2.VideoWriter_fourcc(*'XVID'), 60, size)
+
+    for img in img_list:
+        out.write(img)
+    out.release()
+    print('Video saved')

@@ -1,0 +1,50 @@
+program: main.py
+project: Experiment1_second_sweep
+method: random
+parameters:
+  num-steps:
+    value: 160
+  lr:
+    value: 5e-5
+  max-grad-norm:
+    min: -2.30258509299 # 0.1
+    max: 1.60943791243 # 5
+    distribution: log_uniform
+  ppo-epoch:
+    value: 60
+  num-mini-batch:
+    value: 10
+  seed:
+    value: 100
+  use-linear-lr-decay:
+    value: False
+  
+
+  value-loss-coef:
+    min: 0.1
+    max: 1.0
+    distribution: uniform
+  num-processes:
+    value: 5
+  env-name:
+    value: "gym_aliengo:aliengo-v0"
+  algo:
+    value: ppo
+  log-interval:
+    value: 1
+  gamma:
+    values: [0.8, 0.9, 0.95, 0.99, 0.999, 0.9997]
+  gae-lambda: 
+    values: [0.9, 0.95, 0.99, 1.0]
+  num-env-steps:
+    value: 1_000_000
+  clip-param:
+    min: 0.1
+    max: 0.3
+    distribution: uniform
+  entropy-coef:
+    value: 0
+
+
+  
+  

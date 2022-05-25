@@ -1,8 +1,6 @@
-# pytorch-a2c-ppo-acktr
+# hierarchical-pytorch-a2c-ppo-acktr
 
-## Update (April 12th, 2021)
-
-PPO is great, but [Soft Actor Critic](https://arxiv.org/abs/1812.05905) can be better for many continuous control tasks. Please check out [my new RL](http://github.com/ikostrikov/jax-rl) repository in jax.
+## Original project here: https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail. It has been modified for HRL research. 
 
 ## Please use hyper parameters from this readme. With other hyper parameters things might not work (it's RL after all)!
 
@@ -43,7 +41,7 @@ To use the DeepMind Control Suite environments, set the flag `--env-name dm.<dom
 
 * Python 3 (it might work with Python 2, but I didn't test it)
 * [PyTorch](http://pytorch.org/)
-* [Stable baselines3](https://github.com/DLR-RM/stable-baselines3)
+* [OpenAI baselines](https://github.com/openai/baselines)
 
 In order to install requirements, follow:
 
@@ -51,11 +49,13 @@ In order to install requirements, follow:
 # PyTorch
 conda install pytorch torchvision -c soumith
 
+# Baselines for Atari preprocessing
+git clone https://github.com/openai/baselines.git
+cd baselines
+pip install -e .
+
 # Other requirements
 pip install -r requirements.txt
-
-# Gym Atari
-conda install -c conda-forge gym-atari
 ```
 
 ## Contributions
@@ -120,6 +120,12 @@ python main.py --env-name "Reacher-v2" --algo ppo --use-gae --log-interval 1 --n
 ACKTR requires some modifications to be made specifically for MuJoCo. But at the moment, I want to keep this code as unified as possible. Thus, I'm going for better ways to integrate it into the codebase.
 
 ## Enjoy
+
+Load a pretrained model from [my Google Drive](https://drive.google.com/open?id=0Bw49qC_cgohKS3k2OWpyMWdzYkk).
+
+Also pretrained models for other games are available on request. Send me an email or create an issue, and I will upload it.
+
+Disclaimer: I might have used different hyper-parameters to train these models.
 
 ### Atari
 

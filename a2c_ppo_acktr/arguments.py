@@ -6,6 +6,11 @@ import torch
 def get_args():
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
+        '--hierarchical-policy',
+        action='store_true',
+        default=False,
+        help='use a hierarchical policy')
+    parser.add_argument(
         '--algo', default='a2c', help='algorithm to use: a2c | ppo | acktr')
     parser.add_argument(
         '--gail',
@@ -43,7 +48,7 @@ def get_args():
     parser.add_argument(
         '--use-gae',
         action='store_true',
-        default=False,
+        default=True,
         help='use generalized advantage estimation')
     parser.add_argument(
         '--gae-lambda',
@@ -125,10 +130,10 @@ def get_args():
         '--log-dir',
         default='/tmp/gym/',
         help='directory to save agent logs (default: /tmp/gym)')
-    parser.add_argument(
-        '--save-dir',
-        default='./trained_models/',
-        help='directory to save agent logs (default: ./trained_models/)')
+    # parser.add_argument(
+    #     '--save-dir',
+    #     default='./trained_models/',
+    #     help='directory to save agent logs (default: ./trained_models/)')
     parser.add_argument(
         '--no-cuda',
         action='store_true',
@@ -137,7 +142,7 @@ def get_args():
     parser.add_argument(
         '--use-proper-time-limits',
         action='store_true',
-        default=False,
+        default=True,
         help='compute returns taking into account time limits')
     parser.add_argument(
         '--recurrent-policy',
@@ -146,9 +151,14 @@ def get_args():
         help='use a recurrent policy')
     parser.add_argument(
         '--use-linear-lr-decay',
-        action='store_true',
         default=False,
         help='use a linear schedule on the learning rate')
+    parser.add_argument(
+        '--wandb-project',
+        default=None,
+        type = str,
+        help='wandb project to log runs to, required'
+    )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
