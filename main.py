@@ -18,11 +18,12 @@ from a2c_ppo_acktr.envs import make_vec_envs
 from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from evaluation import evaluate
+import wandb
 
 
 def main():
     args = get_args()
-
+    wandb.init(project="RL_bag_of_tricks", name=args.wandb_run_name, config=args)
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
 
@@ -70,7 +71,7 @@ def main():
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(
             actor_critic, args.value_loss_coef, args.entropy_coef, acktr=True)
-
+    '''
     if args.gail:
         assert len(envs.observation_space.shape) == 1
         discr = gail.Discriminator(
@@ -79,7 +80,7 @@ def main():
         file_name = os.path.join(
             args.gail_experts_dir, "trajs_{}.pt".format(
                 args.env_name.split('-')[0].lower()))
-        
+
         expert_dataset = gail.ExpertDataset(
             file_name, num_trajectories=4, subsample_frequency=20)
         drop_last = len(expert_dataset) > args.gail_batch_size
@@ -88,7 +89,7 @@ def main():
             batch_size=args.gail_batch_size,
             shuffle=True,
             drop_last=drop_last)
-
+    '''
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
                               envs.observation_space.shape, envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
@@ -97,7 +98,9 @@ def main():
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
-    episode_rewards = deque(maxlen=10)
+    episodes_to_watch = 10
+    episode_rewards = deque(maxlen=episodes_to_watch)
+    episode_lengths = deque(maxlen=episodes_to_watch)
 
     start = time.time()
     num_updates = int(
@@ -118,11 +121,15 @@ def main():
                     rollouts.masks[step])
 
             # Obser reward and next obs
-            obs, reward, done, infos = envs.step(action)
+            if args.env_name == "CartPole-v1":
+                obs, reward, done, infos = envs.step(action.squeeze())
+            else:
+                obs, reward, done, infos = envs.step(action)
 
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
+                    episode_lengths.append(info['episode']['l'])
 
             # If done then clean the history of observations.
             masks = torch.FloatTensor(
@@ -178,6 +185,17 @@ def main():
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
             end = time.time()
+            wandb_log = {
+                "Policy Updates": j,
+                "Timesteps": total_num_steps,
+                "FPS": total_num_steps / (end - start),
+                "Mean Reward": np.mean(episode_rewards),
+                "Entropy": dist_entropy,
+                "Value Loss": value_loss,
+                "Actor Loss": action_loss,
+                "Mean Episode Length": np.mean(episode_lengths)
+            }
+            wandb.log(wandb_log)
             print(
                 "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n"
                 .format(j, total_num_steps,
