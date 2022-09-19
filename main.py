@@ -40,7 +40,7 @@ def main():
     device = torch.device("cuda:0" if args.cuda else "cpu")
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False)
+                         args.gamma, args.log_dir, device, False, no_obs_norm=args.no_obs_norm)
 
     actor_critic = Policy(
         envs.observation_space.shape,
@@ -144,7 +144,7 @@ def main():
             next_value = actor_critic.get_value(
                 rollouts.obs[-1], rollouts.recurrent_hidden_states[-1],
                 rollouts.masks[-1]).detach()
-
+        '''
         if args.gail:
             if j >= 10:
                 envs.venv.eval()
@@ -160,7 +160,7 @@ def main():
                 rollouts.rewards[step] = discr.predict_reward(
                     rollouts.obs[step], rollouts.actions[step], args.gamma,
                     rollouts.masks[step])
-
+        '''
         rollouts.compute_returns(next_value, args.use_gae, args.gamma,
                                  args.gae_lambda, args.use_proper_time_limits)
 

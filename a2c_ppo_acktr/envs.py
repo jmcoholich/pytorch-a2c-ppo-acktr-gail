@@ -87,7 +87,8 @@ def make_vec_envs(env_name,
                   log_dir,
                   device,
                   allow_early_resets,
-                  num_frame_stack=None):
+                  num_frame_stack=None,
+                  no_obs_norm=False):
     envs = [
         make_env(env_name, seed, i, log_dir, allow_early_resets)
         for i in range(num_processes)
@@ -98,11 +99,12 @@ def make_vec_envs(env_name,
     else:
         envs = DummyVecEnv(envs)
 
-    if len(envs.observation_space.shape) == 1:
-        if gamma is None:
-            envs = VecNormalize(envs, norm_reward=False)
-        else:
-            envs = VecNormalize(envs, gamma=gamma)
+    if not no_obs_norm:
+        if len(envs.observation_space.shape) == 1:
+            if gamma is None:
+                envs = VecNormalize(envs, norm_reward=False)
+            else:
+                envs = VecNormalize(envs, gamma=gamma)
 
     envs = VecPyTorch(envs, device)
 
@@ -199,8 +201,8 @@ class VecNormalize(VecNormalize_):
         if self.obs_rms:
             if self.training and update:
                 self.obs_rms.update(obs)
-            obs = np.clip((obs - self.obs_rms.mean) /
-                          np.sqrt(self.obs_rms.var + self.epsilon),
+            obs = np.clip((obs - self.obs_rms.mean)
+                          / np.sqrt(self.obs_rms.var + self.epsilon),
                           -self.clip_obs, self.clip_obs)
             return obs
         else:
@@ -228,8 +230,8 @@ class VecPyTorchFrameStack(VecEnvWrapper):
 
         if device is None:
             device = torch.device('cpu')
-        self.stacked_obs = torch.zeros((venv.num_envs, ) +
-                                       low.shape).to(device)
+        self.stacked_obs = torch.zeros((venv.num_envs, )
+                                       + low.shape).to(device)
 
         observation_space = gym.spaces.Box(low=low,
                                            high=high,
