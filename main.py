@@ -67,7 +67,8 @@ def main():
             args.entropy_coef,
             lr=args.lr,
             eps=args.eps,
-            max_grad_norm=args.max_grad_norm)
+            max_grad_norm=args.max_grad_norm,
+            use_clipped_value_loss=args.use_clipped_value_loss)
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(
             actor_critic, args.value_loss_coef, args.entropy_coef, acktr=True)
@@ -164,7 +165,7 @@ def main():
         rollouts.compute_returns(next_value, args.use_gae, args.gamma,
                                  args.gae_lambda, args.use_proper_time_limits)
 
-        value_loss, action_loss, dist_entropy = agent.update(rollouts)
+        value_loss, action_loss, dist_entropy = agent.update(rollouts, standardize_advantages=not args.no_standardize_advantages)
 
         rollouts.after_update()
 

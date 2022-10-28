@@ -181,7 +181,10 @@ class VecPyTorch(VecEnvWrapper):
     def step_async(self, actions):
         if isinstance(actions, torch.LongTensor):
             # Squeeze the dimension for discrete actions
-            actions = actions.squeeze(1)
+            if len(actions.shape) == 2:
+                actions = actions.squeeze(1)
+            elif len(actions.shape) > 2:
+                raise ValueError()
         actions = actions.cpu().numpy()
         self.venv.step_async(actions)
 

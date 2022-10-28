@@ -155,6 +155,12 @@ def get_args():
     parser.add_argument(
         '--no_obs_norm',
         action="store_true")
+    parser.add_argument(
+        '--no_standardize_advantages',
+        action='store_true')
+    parser.add_argument(
+        '--use_clipped_value_loss',
+        action='store_true')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
