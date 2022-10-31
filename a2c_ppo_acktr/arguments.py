@@ -150,16 +150,22 @@ def get_args():
         default=False,
         help='use a linear schedule on the learning rate')
     parser.add_argument(
-        '--wandb_run_name',
+        '--wandb-run-name',
         type=str)
     parser.add_argument(
-        '--no_obs_norm',
+        '--no-obs-norm',
         action="store_true")
     parser.add_argument(
-        '--no_standardize_advantages',
+        '--no-rew-norm',
+        action="store_true")
+    parser.add_argument(
+        '--use-linear-entropy-decay',
+        action="store_true")
+    parser.add_argument(
+        '--no-standardize-advantages',
         action='store_true')
     parser.add_argument(
-        '--use_clipped_value_loss',
+        '--use-clipped-value-loss',
         action='store_true')
     args = parser.parse_args()
 

@@ -88,7 +88,8 @@ def make_vec_envs(env_name,
                   device,
                   allow_early_resets,
                   num_frame_stack=None,
-                  no_obs_norm=False):
+                  no_obs_norm=False,
+                  no_rew_norm=False):
     envs = [
         make_env(env_name, seed, i, log_dir, allow_early_resets)
         for i in range(num_processes)
@@ -99,12 +100,23 @@ def make_vec_envs(env_name,
     else:
         envs = DummyVecEnv(envs)
 
-    if not no_obs_norm:
-        if len(envs.observation_space.shape) == 1:
-            if gamma is None:
-                envs = VecNormalize(envs, norm_reward=False)
-            else:
-                envs = VecNormalize(envs, gamma=gamma)
+    # if not no_obs_norm:
+    if len(envs.observation_space.shape) == 1:
+        if gamma is None:
+            envs = VecNormalize(
+                envs,
+                norm_reward=not no_rew_norm,
+                norm_obs=not no_obs_norm,
+                clip_reward=1e10 * no_rew_norm + (not no_rew_norm) * 10.0,
+                clip_obs=1e10 * no_obs_norm + (not no_obs_norm) * 10.0)
+        else:
+            envs = VecNormalize(
+                envs,
+                gamma=gamma,
+                norm_reward=not no_rew_norm,
+                norm_obs=not no_obs_norm,
+                clip_reward=1e10 * no_rew_norm + (not no_rew_norm) * 10.0,
+                clip_obs=1e10 * no_obs_norm + (not no_obs_norm) * 10.0)
 
     envs = VecPyTorch(envs, device)
 
