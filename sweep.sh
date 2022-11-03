@@ -12,10 +12,10 @@ PROCESSES[1]=10
 PROCESSES[2]=10
 
 STEPS[0]=50000
-STEPS[1]=1000000
-STEPS[2]=2000000
+STEPS[1]=2000000
+STEPS[2]=5000000
 
-for j in {0..2}
+for j in {1..2}
 do
 # no reward norm
 for i in {1..5}

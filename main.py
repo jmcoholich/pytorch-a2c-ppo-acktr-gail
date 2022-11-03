@@ -23,7 +23,7 @@ import wandb
 
 def main():
     args = get_args()
-    wandb.init(project="RL_bag_of_tricks_" + args.env_name, name=args.wandb_run_name, config=args)
+    wandb.init(project="RL_bag_of_tricks_" + args.env_name + '_more_samples', name=args.wandb_run_name, config=args)
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
 
